@@ -25,7 +25,7 @@ const register = asyncHandler ( async (req,res)=>{
     db.query(SQL,(err,result)=>{
         if(err) {
           console.log(err)
-          return res.status(500).json({message: "Error Querying database"});
+          return res.status(500).json({message: "Internal Server Error",status:500});
         }else{
         if(result.length!=0){
            return res.status(403).json({message: "An account with this email already existed please login",status:403});
@@ -49,7 +49,7 @@ const register = asyncHandler ( async (req,res)=>{
                       if(err){
                        console.log("error",err);       
                       }else{
-                        return res.status(201).json({message: "Account created sucessfully",status:201});
+                        return res.status(200).json({message: "Account created sucessfully",status:200});
                       }
                     
                     })
@@ -72,12 +72,12 @@ const register = asyncHandler ( async (req,res)=>{
 const login = asyncHandler ( async (req,res)=>{
     const email = (req.body.email)
     const Password = req.body.password
-    const SQL = `SELECT * FROM users WHERE email=\'${email}\'`;
+    const SQL = `SELECT * FROM user WHERE email=\'${email}\'`;
     db.query(SQL, (error,data)=>
     {
       if(error){
         console.log(error)
-       return res.status(404).json({message: "Error Querying database",status:404});
+       return res.status(500).json({message: "Internal Server Error",status:500});
       }else if((data!=undefined)&(data.length!=0))
      {
       const user = data[0]
@@ -85,11 +85,13 @@ const login = asyncHandler ( async (req,res)=>{
       const passwordCheck = bcrypt.compareSync(Password,password);
       if(passwordCheck){
         let token = jwt.sign({userId:id,username:email},JWT_SECRET_KEY)
-        return res.status(202).json({message: "Accepted",user:user,token:token,status:202});
+        return res.status(200).json({message: "Login Successfully",user:user,token:token,status:200});
       }else if(passwordCheck===false){
         return res.status(401).json({message: "Incorrect password",status:401});
       }
         return res.status(404).json({message: "No account found with this email,please signup",status:404});
+     }else{
+      return res.status(406).json({message: "Not Acceptable or Invalid loggin cridentials",status:406});
      }
     })
    })
