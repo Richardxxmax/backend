@@ -85,12 +85,26 @@ const login = asyncHandler ( async (req,res)=>{
       const passwordCheck = bcrypt.compareSync(Password,password);
       if(passwordCheck){
         let token = jwt.sign({userId:id,username:email},JWT_SECRET_KEY)
-        return res.status(200).json({message: "Login Successfully",user:user,token:token,status:200});
+        const SQL = `SELECT * FROM account WHERE userID=\'${id}\'`;
+        db.query(SQL, (error,data)=>{
+          if(error){
+            console.log(error)
+           return res.status(500).json({message: "Internal Server Error",status:500});
+          }else{
+            const account = data[0]
+            console.log(account)
+            return res.status(200).json({message: "Login Successfully",user:user,token:token,account:account,status:200});
+          }
+          })
+        
       }else if(passwordCheck===false){
         return res.status(401).json({message: "Incorrect password",status:401});
       }
-        return res.status(404).json({message: "No account found with this email,please signup",status:404});
-     }else{
+
+     }else if(data===undefined){
+      return res.status(404).json({message: "No account found with this email,please signup",status:404});
+     }
+     else{
       return res.status(406).json({message: "Not Acceptable or Invalid loggin cridentials",status:406});
      }
     })
