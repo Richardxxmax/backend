@@ -1,24 +1,19 @@
 const db = require('../../Model/dbConfig')
 const asyncHandler = require("express-async-handler");
-const bcrypt = require('bcryptjs');
-const { sendEmail } =require("../email/email")
 const currentDate = require("../../util/Date/currentDate")
-var validator = require('validator');
-const jwt  = require("jsonwebtoken")
-const {JWT_SECRET_KEY} = require("../../Middleware/auth")
 
-//create new user or signup
-const register = asyncHandler ( async (req,res)=>{
-    const firstName = req.body.firstName
-    const lastName = req.body.lastName
-    const email = ((req.body.email).toString()).toLowerCase();
-    const password = (req.body.password).toString()
-    const SSN = req.body.SSN
-    const phone= req.body.phone
-    const DOB = req.body.DOB
-    const password_hash=bcrypt.hashSync(`${password}`, 10);
 
-    console.log(firstName)
+//create new transaction or signup
+const createTransaction = asyncHandler ( async (req,res)=>{
+    
+    const userID = req.body.userID
+    const amount = req.body.amount
+    const transactionType = req.body.transactionType;
+    const transactionDate = req.body.transactionDate
+    const status = req.body.status
+    const purpose = req.body.purpose
+    const receiver = req.body.receiver
+    
 
     const SQL = `SELECT * from user where email=\'${email}\'`
   
@@ -73,7 +68,6 @@ const login = asyncHandler ( async (req,res)=>{
     const email = (req.body.email)
     const Password = req.body.password
     const SQL = `SELECT * FROM user WHERE email=\'${email}\'`;
-    console.log("Hi")
     db.query(SQL, (error,data)=>
     {
       if(error){
