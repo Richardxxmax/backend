@@ -8,6 +8,8 @@ const PORT = process.env.PORT || 7500
 const usersRoutes = require("./Routes/users/userRouter")
 const AdminRoutes = require("./Routes/Admin/AdminRoute")
 const CronJob = require("./Routes/CronJob/CronJob")
+const transactionRoute = require("./Routes/transactions/transactionsRouter")
+
 
 const app = express();
 //Middleware
@@ -20,6 +22,7 @@ app.use(bodyParser.urlencoded({extended:true}))
 app.use(helmet())
 app.use(usersRoutes)
 app.use(AdminRoutes)
+app.use(transactionRoute)
 app.use(CronJob)
 
 console.log(date())

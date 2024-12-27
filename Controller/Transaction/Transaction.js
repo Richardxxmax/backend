@@ -63,226 +63,27 @@ const createTransaction = asyncHandler ( async (req,res)=>{
 
 
 
-//Login user 
-const login = asyncHandler ( async (req,res)=>{
-    const email = (req.body.email)
-    const Password = req.body.password
-    const SQL = `SELECT * FROM user WHERE email=\'${email}\'`;
-    db.query(SQL, (error,data)=>
-    {
-      if(error){
-        console.log(error)
-       return res.status(500).json({message: "Internal Server Error",status:500});
-      }else if((data!=undefined)&(data.length!=0))
-     {
-      const user = data[0]
-      const {id,password,email} = user
-      const passwordCheck = bcrypt.compareSync(Password,password);
-      if(passwordCheck){
-        let token = jwt.sign({userId:id,username:email},JWT_SECRET_KEY)
-        const SQL = `SELECT * FROM account WHERE userID=\'${id}\'`;
-        db.query(SQL, (error,data)=>{
-          if(error){
-            console.log(error)
-           return res.status(500).json({message: "Internal Server Error",status:500});
-          }else{
-            const account = data[0]
-            console.log(account)
-            return res.status(200).json({message: "Login Successfully",user:user,token:token,account:account,status:200});
-          }
-          })
-        
-      }else if(passwordCheck===false){
-        return res.status(401).json({message: "Incorrect password",status:401});
-      }
+//get transactions
+const getTransaction = asyncHandler ( async (req,res)=>{
+    const userID = req.body.userID
+    const SQL = ` SELECT * from transactionHistory WHERE userID=${userID}`
 
-     }else if(data===undefined){
-      return res.status(404).json({message: "No account found with this email,please signup",status:404});
-     }
-     else{
-      return res.status(406).json({message: "Not Acceptable or Invalid loggin cridentials",status:406});
-     }
-    })
-   })
+    db.query(SQL,(error,result)=>{
 
-
-
-
-
-   const forgetPassword = asyncHandler ( async (req,res)=>{
-
-    const email = ((req.body.email).toString()).toLowerCase();
-    const SQL = `SELECT * from users`;      
-    db.query(SQL,(err,data)=>{
-        if(err)
-        {
-          return res.status(500).json({message: "Error Querying database"});
-        }else if(validator.isEmail(email)){
-         const isExisted = data.filter((data)=>data.email===email)
-         if(isExisted[0])
-         {
-          const otp = (Math.random() * 10000).toFixed()
-          const otp_hash=bcrypt.hashSync(`${otp}`, 10);
-          const SQL= `UPDATE users SET verification_code=\'${otp_hash}\' WHERE id=${isExisted[0].id}`
-          db.query(SQL,(error , result)=>{ 
-                  if(error)
-                  console.log(error)
-               console.info(result)
-          }) 
-           const data = { 
-            email:`${email}`,
-            subject:"PremiumBlog Account OTP",
-            text:`Your OTP is ${otp}, please don't share with anyone `
-        } 
-      
-        sendEmail(data)
-           return res.status(201).json({message: "Otp Sent to email",status:201,email:email});
-              
-         }else{
-           
-            return res.status(401).json({message: "No accound found with this email, please signup a new account",status:401});
-       
-         }}else{
-           return res.status(401).json({message: "invalid email address , Please enter a valid email",status:401});
-         }
-       })
-   
-    })
-  
-  //confirm user OTP
-  const confirmOTP = asyncHandler ( async (req,res)=>{
-      const email = ((req.body.email).toString()).toLowerCase();
-      const otp = (req.body.otp)
-      const SQL = `SELECT * FROM users`;
-       db.query(SQL, (error,data)=>
-       {
-        if(data!=undefined)
-        {
-         const Data = data.filter((data)=>data.email===email)
-         const obj = Data[0]
-         const response =bcrypt.compareSync(otp,obj.verification_code)
-   
-        if(response){
-   
-           return res.status(202).json({message: "Authentication successful",status:201});
+        if(error){
+          console.log(error)
+          return res.status(500).json({message:error,status:500})
         }else{
-   
-           return res.status(401).json({message: "Incorrect Otp Please enter correct OTP",status:401});
+          console.log(result)
+          return res.status(200).json({message: "data fetched successfully",status:200,transactions:result});
         }
-       }else{
-           console.log(result)
-       }
-       })
-      })
- //confirm user OTP and delete account
- const deleteUser = asyncHandler ( async (req,res)=>{
-  const email = ((req.body.email).toString()).toLowerCase();
-  const otp = (req.body.otp)
-  const SQL = `SELECT * FROM users`;
-   db.query(SQL, (error,data)=>{
-    if(data!=undefined)
-    {
-     const Data = data.filter((data)=>data.email===email)
-     const obj = Data[0]
-     const response =bcrypt.compareSync(otp,obj.verification_code)
-
-    if(response){
-     const SQL = `DELETE  FROM users WHERE id = ${obj.id}`;
-     
-     db.query(SQL,(err,data)=>{
-        if(err)
-        {
-          return res.status(500).json({message: "Error Querying database"});
-        }else{ 
-           const data = { 
-            email:`${email}`,
-            subject:"Bloomzon Delete",
-            text:`Your Bloomzon account was deleted successfully`
-        } 
-        sendEmail(data)
-        return res.status(202).json({message: "Account deleted successful",status:1});
-
-    }
-  })
-
-   }else{
-
-     return res.status(401).json({message: "Incorrect Otp Please enter correct OTP",status:0});
-  }
-  }else{
-    
- }
-   })
-  })
-
-
-   //Reset Password
-   const resetPassword = asyncHandler ( async (req,res)=>{
-
-       const email = ((req.body.email).toString()).toLowerCase();
-       const password = req.body.password
-       const password_hash=bcrypt.hashSync(`${password}`, 10);
-     
-        const SQL = `SELECT * from users`
-     
-       db.query(SQL,(err,data)=>{
-           if(err)
-           {
-             return res.status(500).json({message: "Error Querying database"});
-           }else if(validator.isEmail(email)){
-            const isExisted = data.filter((data)=>data.email===email)
-            if(isExisted[0])
-            {
-            
-        
-             const SQL= `UPDATE users SET password = \'${password_hash}\'  WHERE id=${isExisted[0].id}`
-             db.query(SQL,(error , data)=>{ 
-                     if(error)
-                     console.log(error)
-                  console.info(data)
-             }) 
-             const data = { 
-               email:`${email}`,
-               subject:"Reset Password",
-               text: `Your PremiumBlog account password has been updated \n if this action was not from you please send us mail at officialpremiumblog@gmail.com`
-           } 
-           sendEmail(data)
-              return res.status(201).json({message: "Password updated",status:201});
-                 
-            }else{
-              
-               return res.status(401).json({message: "Failed to update password",status:401});
-          
-            }}else{
-              return res.status(401).json({message: "invalid email address , Please enter a valid email",status:401});
-            }
-          })
-      
-       })
-     
-
-    //fetch user data
-   const fetchUser = asyncHandler ( async (req,res)=>{
-
-    const { userID } = req.body
-    console.log(userID)
-     const SQL = `SELECT * from users WHERE id = ${userID} `
-  
-    db.query(SQL,(err,result)=>{
-        if(err)
-        {
-          return res.status(500).json({status:0,message: "Error Querying database"});
-        }
-        res.status(201).json({result:result})
-
-       })
-   
     })
-  
+    
+})
 
 
 
 
-  module.exports = {fetchUser,login,register,forgetPassword,confirmOTP,resetPassword};
+  module.exports = {createTransaction,getTransaction};
 
 
