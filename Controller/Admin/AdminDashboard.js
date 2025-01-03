@@ -2,7 +2,7 @@ const db = require('../../Model/dbConfig')
 const asyncHandler = require("express-async-handler");
 const bcrypt = require('bcryptjs');
 const currentDate = require("../../util/Date/currentDate")
-
+const validator = require('validator');
 
 //admin data route
 const AdminData = asyncHandler ( async (req,res)=>{
@@ -45,16 +45,22 @@ const updateAvailableBalance = asyncHandler ( async (req,res)=>{
     const userID = req.body.userID
     const balance = req.body.balance
     const SQL = `UPDATE account SET availableBalance = ${balance}  WHERE userID=\'${userID}\'`
+    if (validator.isNumeric(balance)) {
 
+        db.query(SQL,(err,result)=>{
+            if(err) {
+                console.log(err)
+              return res.status(500).json({message: "Error Querying database"});
+            }
+            return res.status(200).json({message: "Updated Successfully",status:200,balance:balance});
+        
+            })
+        
+    } else {
+        return res.status(400).json({message: "Failed to update, please enter valid number",status:400,balance:balance});
+    }
   
-    db.query(SQL,(err,result)=>{
-        if(err) {
-            console.log(err)
-          return res.status(500).json({message: "Error Querying database"});
-        }
-        return res.status(200).json({message: "Updated Successfully",status:200,balance:balance});
-         
-        })
+   
             
      }) 
 
