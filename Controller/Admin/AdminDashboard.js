@@ -39,12 +39,30 @@ const AdminData = asyncHandler ( async (req,res)=>{
 
 
 
+//admin data route
+const updateAvailableBalance = asyncHandler ( async (req,res)=>{
+
+    const userID = req.body.userID
+    const balance = req.body.balance
+    const SQL = `UPDATE account SET availableBalance = ${balance}  WHERE userID=\'${userID}\'`
+
+  
+    db.query(SQL,(err,result)=>{
+        if(err) {
+            console.log(err)
+          return res.status(500).json({message: "Error Querying database"});
+        }
+        return res.status(200).json({message: "Updated Successfully",status:200,balance:balance});
+         
+        })
+            
+     }) 
 
 
 
 
 
 
-  module.exports = {AdminData};
+  module.exports = {AdminData,updateAvailableBalance};
 
 
