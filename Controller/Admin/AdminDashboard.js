@@ -3,7 +3,7 @@ const asyncHandler = require("express-async-handler");
 const bcrypt = require('bcryptjs');
 const currentDate = require("../../util/Date/currentDate")
 const validator = require('validator');
-
+const moment = require("moment") 
 //admin data route
 const AdminData = asyncHandler ( async (req,res)=>{
 
@@ -64,6 +64,8 @@ const updateAvailableBalance = asyncHandler ( async (req,res)=>{
             
      }) 
 
+
+    //admin data route
      const updateCurrentBalance = asyncHandler ( async (req,res)=>{
 
         const userID = req.body.userID
@@ -87,6 +89,36 @@ const updateAvailableBalance = asyncHandler ( async (req,res)=>{
        
                 
          }) 
+
+
+    //createhistory
+     const createHistory = asyncHandler ( async (req,res)=>{
+   
+        const  userID = req.body.userID
+        const purpose = req.body.purpose
+        const date = moment(req.body.date).format('MMMM Do YYYY, h:mm:ss a')
+        const amount = req.body.amount
+        const receiver = req.body.receiver
+        const transactionType = "Merchandise"
+        const status =  "sent"
+        const SQL = `INSERT INTO transactionHistory (userID, amount, transactionType, transactionDate,status, purpose, receiver,updatedAt, createdAt) VALUES (?,?,?,?,?,?,?,?,?)`
+       
+          
+            db.query(SQL,[userID,amount,transactionType,date,status,purpose,receiver,currentDate(),currentDate()],(err,result)=>{
+                if(err) {
+                    console.log(err)
+                  return res.status(500).json({message: "Error Querying database"});
+                }
+                return res.status(200).json({message: "Created Successfully",status:200});
+            
+                })
+            
+           
+      
+       
+                
+         }) 
+    
     
 
 
@@ -94,6 +126,6 @@ const updateAvailableBalance = asyncHandler ( async (req,res)=>{
 
 
 
-  module.exports = {AdminData,updateAvailableBalance,updateCurrentBalance};
+  module.exports = {AdminData,updateAvailableBalance,updateCurrentBalance,createHistory};
 
 
